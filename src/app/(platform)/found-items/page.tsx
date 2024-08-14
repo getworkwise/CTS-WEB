@@ -1,6 +1,4 @@
 import Link from "next/link";
-
-import PlaceholderContent from "@/components/demo/placeholder-content";
 import { ContentLayout } from "@/components/admin-panel/content-layout";
 import {
   Breadcrumb,
@@ -11,9 +9,9 @@ import {
   BreadcrumbSeparator
 } from "@/components/ui/breadcrumb";
 
-export default function NewPostPage() {
+export default function FoundItemsPage() {
   return (
-    <ContentLayout title="New Post">
+    <ContentLayout title="Found Items">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -29,17 +27,12 @@ export default function NewPostPage() {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link href="/posts">Posts</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>New</BreadcrumbPage>
+            <BreadcrumbPage>Found Items</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <PlaceholderContent />
+      <h1>Found Items</h1>
+      <p>This page will contain the list of found items and a form to report new found items.</p>
     </ContentLayout>
   );
 }

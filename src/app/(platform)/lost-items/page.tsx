@@ -1,6 +1,4 @@
 import Link from "next/link";
-
-import PlaceholderContent from "@/components/demo/placeholder-content";
 import { ContentLayout } from "@/components/admin-panel/content-layout";
 import {
   Breadcrumb,
@@ -11,9 +9,9 @@ import {
   BreadcrumbSeparator
 } from "@/components/ui/breadcrumb";
 
-export default function PostsPage() {
+export default function LostItemsPage() {
   return (
-    <ContentLayout title="All Posts">
+    <ContentLayout title="Lost Items">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -29,11 +27,12 @@ export default function PostsPage() {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Posts</BreadcrumbPage>
+            <BreadcrumbPage>Lost Items</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <PlaceholderContent />
+      <h1>Lost Items</h1>
+      <p>This page will contain the list of lost items and a form to report new lost items.</p>
     </ContentLayout>
   );
 }

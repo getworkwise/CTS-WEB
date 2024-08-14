@@ -1,6 +1,4 @@
 import Link from "next/link";
-
-import PlaceholderContent from "@/components/demo/placeholder-content";
 import { ContentLayout } from "@/components/admin-panel/content-layout";
 import {
   Breadcrumb,
@@ -11,9 +9,9 @@ import {
   BreadcrumbSeparator
 } from "@/components/ui/breadcrumb";
 
-export default function TagsPage() {
+export default function SettingsPage() {
   return (
-    <ContentLayout title="Tags">
+    <ContentLayout title="Settings">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -29,11 +27,12 @@ export default function TagsPage() {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Tags</BreadcrumbPage>
+            <BreadcrumbPage>Settings</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <PlaceholderContent />
+      <h1>Settings</h1>
+      <p>This page will contain platform settings and configuration options.</p>
     </ContentLayout>
   );
 }

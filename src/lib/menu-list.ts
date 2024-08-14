@@ -1,10 +1,10 @@
 import {
-  Tag,
+  LayoutDashboard,
+  Search,
+  FileQuestion,
+  FileCheck,
   Users,
   Settings,
-  Bookmark,
-  SquarePen,
-  LayoutGrid,
   LucideIcon
 } from "lucide-react";
 
@@ -30,56 +30,45 @@ type Group = {
 export function getMenuList(pathname: string): Group[] {
   return [
     {
-      groupLabel: "",
+      groupLabel: "Main",
       menus: [
         {
           href: "/dashboard",
           label: "Dashboard",
-          active: pathname.includes("/dashboard"),
-          icon: LayoutGrid,
+          active: pathname === "/dashboard",
+          icon: LayoutDashboard,
           submenus: []
         }
       ]
     },
     {
-      groupLabel: "Contents",
+      groupLabel: "Lost and Found",
       menus: [
         {
-          href: "",
-          label: "Posts",
-          active: pathname.includes("/posts"),
-          icon: SquarePen,
-          submenus: [
-            {
-              href: "/posts",
-              label: "All Posts",
-              active: pathname === "/posts"
-            },
-            {
-              href: "/posts/new",
-              label: "New Post",
-              active: pathname === "/posts/new"
-            }
-          ]
-        },
-        {
-          href: "/categories",
-          label: "Categories",
-          active: pathname.includes("/categories"),
-          icon: Bookmark,
+          href: "/lost-items",
+          label: "Lost Items",
+          active: pathname.includes("/lost-items"),
+          icon: FileQuestion,
           submenus: []
         },
         {
-          href: "/tags",
-          label: "Tags",
-          active: pathname.includes("/tags"),
-          icon: Tag,
+          href: "/found-items",
+          label: "Found Items",
+          active: pathname.includes("/found-items"),
+          icon: FileCheck,
+          submenus: []
+        },
+        {
+          href: "/search",
+          label: "Search",
+          active: pathname.includes("/search"),
+          icon: Search,
           submenus: []
         }
       ]
     },
     {
-      groupLabel: "Settings",
+      groupLabel: "Administration",
       menus: [
         {
           href: "/users",
@@ -89,9 +78,9 @@ export function getMenuList(pathname: string): Group[] {
           submenus: []
         },
         {
-          href: "/account",
-          label: "Account",
-          active: pathname.includes("/account"),
+          href: "/settings",
+          label: "Settings",
+          active: pathname.includes("/settings"),
           icon: Settings,
           submenus: []
         }
