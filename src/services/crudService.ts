@@ -8,7 +8,17 @@ export class CrudService<T extends { id: string }> {
   }
 
   async create(data: Omit<T, 'id' | 'created' | 'updated'>): Promise<T> {
-    return pb.collection(this.collection).create<T>(data);
+    try {
+      const record = await pb.collection(this.collection).create<T>(data);
+      return record;
+    } catch (error) {
+      console.error(`Error creating record in ${this.collection}:`, error);
+      if (error instanceof Error) {
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+      }
+      throw error;
+    }
   }
 
   async read(id: string): Promise<T> {

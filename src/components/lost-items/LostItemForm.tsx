@@ -27,13 +27,14 @@ import toast from 'react-hot-toast';
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
-  dateLost: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format'),
+  date_lost: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format'),
   location: z.string().min(1, 'Location is required'),
-  isOfficialDocument: z.boolean(),
-  documentType: z.string().optional(),
-  documentNumber: z.string().optional(),
-  issuingAuthority: z.string().optional(),
+  is_official_document: z.boolean(),
+  document_type: z.string().optional(),
+  document_number: z.string().optional(),
+  issuing_authority: z.string().optional(),
 });
+
 
 type FormData = z.infer<typeof formSchema>;
 
@@ -50,24 +51,23 @@ export function LostItemForm({ onSubmit }: LostItemFormProps) {
     defaultValues: {
       title: '',
       description: '',
-      dateLost: '',
+      date_lost: '',
       location: '',
-      isOfficialDocument: false,
-      documentType: '',
-      documentNumber: '',
-      issuingAuthority: '',
+      is_official_document: false,
+      document_type: '',
+      document_number: '',
+      issuing_authority: '',
     },
   });
 
   const handleSubmit = async (data: FormData) => {
     setIsSubmitting(true);
     try {
+      console.log('Form data before submission:', data);
       await onSubmit(data);
-      toast.success('Lost item reported successfully!');
       form.reset();
     } catch (error) {
-      console.error('Error submitting form:', error);
-      toast.error('Failed to submit the form. Please try again.');
+      console.error('Error in LostItemForm handleSubmit:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -108,7 +108,7 @@ export function LostItemForm({ onSubmit }: LostItemFormProps) {
 
         <FormField
           control={form.control}
-          name="dateLost"
+          name="date_lost"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Date Lost</FormLabel>
@@ -137,7 +137,7 @@ export function LostItemForm({ onSubmit }: LostItemFormProps) {
 
         <FormField
           control={form.control}
-          name="isOfficialDocument"
+          name="is_official_document"
           render={({ field }) => (
             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
               <div className="space-y-0.5">
@@ -163,7 +163,7 @@ export function LostItemForm({ onSubmit }: LostItemFormProps) {
           <>
             <FormField
               control={form.control}
-              name="documentType"
+              name="document_type"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Document Type</FormLabel>
@@ -188,7 +188,7 @@ export function LostItemForm({ onSubmit }: LostItemFormProps) {
 
             <FormField
               control={form.control}
-              name="documentNumber"
+              name="document_number"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Document Number</FormLabel>
@@ -202,7 +202,7 @@ export function LostItemForm({ onSubmit }: LostItemFormProps) {
 
             <FormField
               control={form.control}
-              name="issuingAuthority"
+              name="issuing_authority"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Issuing Authority</FormLabel>

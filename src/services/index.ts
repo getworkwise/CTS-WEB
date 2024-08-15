@@ -1,17 +1,14 @@
-// src/services/index.ts
-
 import pb from '@/lib/pocketbase';
 import { CrudService } from './crudService';
 
 // Base type for PocketBase records
-interface BaseRecord {
+export interface BaseRecord {
   id: string;
   created: string;
   updated: string;
 }
 
-// Define interfaces for your collection types
-interface User extends BaseRecord {
+export interface User extends BaseRecord {
   name: string;
   email: string;
   role: 'admin' | 'agent';
@@ -19,21 +16,27 @@ interface User extends BaseRecord {
   last_login: string | null;
 }
 
-export interface LostItem {
-  id: string;
+export interface LostItem extends BaseRecord {
   title: string;
   description: string;
-  dateLost: string;
+  date_lost: string;
   location: string;
   status: string;
-  isOfficialDocument: boolean;
-  documentType?: string;
-  documentNumber?: string;
-  issuingAuthority?: string;
+  user: string; // This should be the ID of the user who reported the item
+  is_official_document: boolean;
 }
 
+export interface CTSDocument extends BaseRecord {
+  document_type: string;
+  document_number: string;
+  issuing_authority: string;
+  issue_date: string;
+  expiry_date: string;
+  status: 'reported' | 'found' | 'returned' | 'expired';
+  related_lost_item: string; // ID of the related lost item
+}
 
-interface FoundItem extends BaseRecord {
+export interface FoundItem extends BaseRecord {
   title: string;
   description: string;
   date_found: string;
@@ -43,27 +46,11 @@ interface FoundItem extends BaseRecord {
   finder_contact: string;
 }
 
-interface Match extends BaseRecord {
+export interface Match extends BaseRecord {
   lost_item: string; // ID of the related lost item
   found_item: string; // ID of the related found item
   status: 'pending' | 'confirmed' | 'rejected';
   confidence_score: number;
-}
-
-interface DocumentType extends BaseRecord {
-  name: string;
-  description: string;
-}
-
-
-interface CTSDocument extends BaseRecord {
-  document_type: string; // ID of the related document type
-  document_number: string;
-  issuing_authority: string;
-  issue_date: string;
-  expiry_date: string;
-  status: 'reported' | 'found' | 'returned' | 'expired';
-  related_lost_item: string; // ID of the related lost item
 }
 
 export interface AuditLog extends BaseRecord {
@@ -77,12 +64,10 @@ export interface AuditLog extends BaseRecord {
 // Create services for each collection
 export const userService = new CrudService<User>('users');
 export const lostItemService = new CrudService<LostItem>('lost_items');
+export const ctsDocumentService = new CrudService<CTSDocument>('cts_documents');
 export const foundItemService = new CrudService<FoundItem>('found_items');
 export const matchService = new CrudService<Match>('matches');
-export const documentTypeService = new CrudService<DocumentType>('document_types');
-export const ctsDocumentService = new CrudService<CTSDocument>('cts_documents');
 export const auditLogService = new CrudService<AuditLog>('audit_logs');
-
 
 // Add any custom methods for specific collections here
 export const authService = {
@@ -123,38 +108,74 @@ export const authService = {
 
 // Helper function to create audit logs
 export async function createAuditLog(userId: string, action: string, collectionName: string, recordId: string, details: Record<string, any>) {
-  return auditLogService.create({
-    user: userId,
-    action,
-    collection_name: collectionName,
-    record_id: recordId,
-    details
-  });
+  try {
+    const log = await auditLogService.create({
+      user: userId,
+      action,
+      collection_name: collectionName,
+      record_id: recordId,
+      details
+    });
+    console.log('Audit log created:', log);
+    return log;
+  } catch (error) {
+    console.error('Error creating audit log:', error);
+    throw error;
+  }
 }
 
-// Helper function to create a CTS document
-export async function createCTSDocument(data: Omit<CTSDocument, 'id' | 'created' | 'updated'>, userId: string) {
-  const ctsDocument = await ctsDocumentService.create(data);
-  await createAuditLog(userId, 'create_cts_document', 'cts_documents', ctsDocument.id, data);
-  return ctsDocument;
-}
-
-// Helper function to report a lost item with a CTS document
-export async function reportLostItemWithCTSDocument(
-  lostItemData: Omit<LostItem, 'id' | 'created' | 'updated'>,
-  ctsDocumentData: Omit<CTSDocument, 'id' | 'created' | 'updated' | 'related_lost_item'>,
-  userId: string
+// Helper function to report a lost item
+export async function reportLostItem(
+  lostItemData: Omit<LostItem, 'id' | 'created' | 'updated' | 'user' | 'status' | 'is_official_document'>,
+  userId: string,
+  isOfficialDocument: boolean,
+  ctsDocumentData?: Omit<CTSDocument, 'id' | 'created' | 'updated' | 'related_lost_item' | 'status'>
 ) {
-  const lostItem = await lostItemService.create(lostItemData);
-  const ctsDocument = await createCTSDocument({
-    ...ctsDocumentData,
-    related_lost_item: lostItem.id
-  }, userId);
-  
-  await createAuditLog(userId, 'report_lost_item_with_cts_document', 'lost_items', lostItem.id, {
-    lost_item: lostItemData,
-    cts_document: ctsDocumentData
-  });
+  console.log('Starting reportLostItem function');
+  console.log('Lost item data:', lostItemData);
+  console.log('User ID:', userId);
+  console.log('Is official document:', isOfficialDocument);
+  console.log('CTS document data:', ctsDocumentData);
 
-  return { lostItem, ctsDocument };
+  try {
+    const lostItem = await lostItemService.create({
+      ...lostItemData,
+      user: userId,
+      status: 'open',
+      is_official_document: isOfficialDocument
+    });
+    console.log('Lost item created successfully:', lostItem);
+
+    let ctsDocument = null;
+    if (isOfficialDocument && ctsDocumentData) {
+      console.log('Attempting to create CTS document');
+      try {
+        ctsDocument = await ctsDocumentService.create({
+          ...ctsDocumentData,
+          related_lost_item: lostItem.id,
+          status: 'reported'
+        });
+        console.log('CTS document created successfully:', ctsDocument);
+      } catch (error) {
+        console.error('Error creating CTS document:', error);
+      }
+    }
+
+    console.log('Attempting to create audit log');
+    try {
+      await createAuditLog(userId, 'report_lost_item', 'lost_items', lostItem.id, {
+        ...lostItemData,
+        is_official_document: isOfficialDocument,
+        cts_document: ctsDocument ? ctsDocumentData : null
+      });
+      console.log('Audit log created successfully');
+    } catch (error) {
+      console.error('Error creating audit log:', error);
+    }
+
+    return { lostItem, ctsDocument };
+  } catch (error) {
+    console.error('Error in reportLostItem function:', error);
+    throw error;
+  }
 }
