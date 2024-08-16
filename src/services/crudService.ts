@@ -33,15 +33,11 @@ export class CrudService<T extends { id: string }> {
     return pb.collection(this.collection).delete(id);
   }
 
-  async list(page: number = 1, perPage: number = 20, filter: string = ''): Promise<{ items: T[], totalItems: number }> {
-    const requestKey = `${this.collection}_list_${Date.now()}`;
-    const result = await pb.collection(this.collection).getList<T>(page, perPage, { 
-      filter,
-      requestKey // Add this line
+  async list(): Promise<T[]> {
+    const result = await pb.collection(this.collection).getFullList<T>({
+      sort: '-created', // Sort by creation date, newest first
+      requestKey: null, // Disable auto-cancellation for this request
     });
-    return {
-      items: result.items,
-      totalItems: result.totalItems,
-    };
+    return result;
   }
 }

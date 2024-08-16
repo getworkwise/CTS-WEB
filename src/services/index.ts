@@ -24,17 +24,15 @@ export interface LostItem extends BaseRecord {
   status: string;
   user: string; // This should be the ID of the user who reported the item
   is_official_document: boolean;
+  // Fields from CTSDocument
+  document_type?: string;
+  document_number?: string;
+  issuing_authority?: string;
+  issue_date?: string;
+  expiry_date?: string;
+  document_status?: 'reported' | 'found' | 'returned' | 'expired';
 }
 
-export interface CTSDocument extends BaseRecord {
-  document_type: string;
-  document_number: string;
-  issuing_authority: string;
-  issue_date: string;
-  expiry_date: string;
-  status: 'reported' | 'found' | 'returned' | 'expired';
-  related_lost_item: string; // ID of the related lost item
-}
 
 export interface FoundItem extends BaseRecord {
   title: string;
@@ -64,7 +62,6 @@ export interface AuditLog extends BaseRecord {
 // Create services for each collection
 export const userService = new CrudService<User>('users');
 export const lostItemService = new CrudService<LostItem>('lost_items');
-export const ctsDocumentService = new CrudService<CTSDocument>('cts_documents');
 export const foundItemService = new CrudService<FoundItem>('found_items');
 export const matchService = new CrudService<Match>('matches');
 export const auditLogService = new CrudService<AuditLog>('audit_logs');
@@ -126,54 +123,37 @@ export async function createAuditLog(userId: string, action: string, collectionN
 
 // Helper function to report a lost item
 export async function reportLostItem(
-  lostItemData: Omit<LostItem, 'id' | 'created' | 'updated' | 'user' | 'status' | 'is_official_document'>,
+  lostItemData: Omit<LostItem, 'id' | 'created' | 'updated' | 'user' | 'status' | 'is_official_document' | 'document_status'>,
   userId: string,
-  isOfficialDocument: boolean,
-  ctsDocumentData?: Omit<CTSDocument, 'id' | 'created' | 'updated' | 'related_lost_item' | 'status'>
+  isOfficialDocument: boolean
 ) {
   console.log('Starting reportLostItem function');
   console.log('Lost item data:', lostItemData);
   console.log('User ID:', userId);
   console.log('Is official document:', isOfficialDocument);
-  console.log('CTS document data:', ctsDocumentData);
 
   try {
     const lostItem = await lostItemService.create({
       ...lostItemData,
       user: userId,
       status: 'open',
-      is_official_document: isOfficialDocument
+      is_official_document: isOfficialDocument,
+      document_status: isOfficialDocument ? 'reported' : undefined
     });
     console.log('Lost item created successfully:', lostItem);
-
-    let ctsDocument = null;
-    if (isOfficialDocument && ctsDocumentData) {
-      console.log('Attempting to create CTS document');
-      try {
-        ctsDocument = await ctsDocumentService.create({
-          ...ctsDocumentData,
-          related_lost_item: lostItem.id,
-          status: 'reported'
-        });
-        console.log('CTS document created successfully:', ctsDocument);
-      } catch (error) {
-        console.error('Error creating CTS document:', error);
-      }
-    }
 
     console.log('Attempting to create audit log');
     try {
       await createAuditLog(userId, 'report_lost_item', 'lost_items', lostItem.id, {
         ...lostItemData,
-        is_official_document: isOfficialDocument,
-        cts_document: ctsDocument ? ctsDocumentData : null
+        is_official_document: isOfficialDocument
       });
       console.log('Audit log created successfully');
     } catch (error) {
       console.error('Error creating audit log:', error);
     }
 
-    return { lostItem, ctsDocument };
+    return lostItem;
   } catch (error) {
     console.error('Error in reportLostItem function:', error);
     throw error;

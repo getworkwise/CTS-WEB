@@ -37,27 +37,27 @@ export default function ReportLostItemPage() {
       toast.error('You must be logged in to report a lost item.');
       return;
     }
-
+  
     const toastId = toast.loading('Reporting lost item...');
     try {
       console.log('Submitting form data:', formData);
       const { 
         is_official_document, 
-        document_type, 
-        document_number, 
-        issuing_authority,
-        issue_date,
-        expiry_date,
         ...lostItemData 
       } = formData;
       
+      if (is_official_document) {
+        lostItemData.issue_date = new Date(lostItemData.issue_date).toISOString();
+        lostItemData.expiry_date = new Date(lostItemData.expiry_date).toISOString();
+        lostItemData.document_status = 'reported';
+      }
+  
       const result = await reportLostItem(
-        lostItemData, 
-        userId, 
-        is_official_document,
-        is_official_document ? { document_type, document_number, issuing_authority, issue_date, expiry_date } : undefined
+        lostItemData,
+        userId,
+        is_official_document
       );
-      
+  
       console.log('Created lost item:', result);
       toast.success('Lost item reported successfully!', { id: toastId, duration: 3000 });
       
@@ -67,14 +67,10 @@ export default function ReportLostItemPage() {
       }, 3000);
     } catch (error) {
       console.error('Error reporting lost item:', error);
-      if (error instanceof Error) {
-        console.error('Error message:', error.message);
-        console.error('Error stack:', error.stack);
-      }
       toast.error(`Failed to report lost item: ${error instanceof Error ? error.message : 'Unknown error'}`, { id: toastId, duration: 5000 });
     }
   };
-
+  
   if (!isAuthenticated) {
     return <div>Checking authentication...</div>;
   }
