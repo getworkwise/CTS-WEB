@@ -3,7 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table"
 import { LostItem } from "@/services"
 import { Checkbox } from "@/components/ui/checkbox"
-
+import { CellAction } from "./cell-action" // Adjust this import path as needed
 
 export const columns: ColumnDef<LostItem>[] = [
     {
@@ -27,30 +27,34 @@ export const columns: ColumnDef<LostItem>[] = [
         ),
         enableSorting: false,
         enableHiding: false,
-      },
-  {
-    accessorKey: "title",
-    header: "Title",
-  },
-  {
-    accessorKey: "date_lost",
-    header: "Date Lost",
-    cell: ({ row }) => {
-      const date = new Date(row.getValue("date_lost"));
-      return date.toLocaleDateString();
     },
-  },
-  {
-    accessorKey: "location",
-    header: "Location",
-  },
-  {
-    accessorKey: "status",
-    header: "Status",
-  },
-  {
-    accessorKey: "is_official_document",
-    header: "Official Document",
-    cell: ({ row }) => row.getValue("is_official_document") ? "Yes" : "No",
-  },
+    {
+        accessorKey: "title",
+        header: "Title",
+    },
+    {
+        accessorKey: "date_lost",
+        header: "Date Lost",
+        cell: ({ row }) => {
+            const date = new Date(row.getValue("date_lost"));
+            return date.toLocaleDateString();
+        },
+    },
+    {
+        accessorKey: "location",
+        header: "Location",
+    },
+    {
+        accessorKey: "status",
+        header: "Status",
+    },
+    {
+        accessorKey: "is_official_document",
+        header: "Official Document",
+        cell: ({ row }) => row.getValue("is_official_document") ? "Yes" : "No",
+    },
+    {
+        id: "actions",
+        cell: ({ row }) => <CellAction data={row.original} />
+    }
 ]
