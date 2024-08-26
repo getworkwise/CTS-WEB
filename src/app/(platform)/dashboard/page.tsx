@@ -7,9 +7,10 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { authService, lostItemService, foundItemService, matchService } from '@/services';
 import { RecentActivities } from '@/components/dashboard/RecentActivities';
+import { Badge } from "@/components/ui/badge";
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<{ name: string } | null>(null);
+  const [user, setUser] = useState<{ name: string; role: string } | null>(null);
   const [stats, setStats] = useState({
     totalLostItems: 0,
     totalFoundItems: 0,
@@ -23,22 +24,22 @@ export default function DashboardPage() {
       try {
         const currentUser = await authService.getCurrentUser();
         if (currentUser) {
-          setUser({ name: currentUser.name });
+          setUser({ name: currentUser.name, role: currentUser.role });
         }
 
         const [lostItems, foundItems, matches, pendingLostItems, pendingFoundItems] = await Promise.all([
-          lostItemService.list(1, 1),
-          foundItemService.list(1, 1),
-          matchService.list(1, 1),
-          lostItemService.list(1, 1, "status='open' || status='in_progress'"),
-          foundItemService.list(1, 1, "status='unclaimed' || status='in_progress'")
+          lostItemService.list(),
+          foundItemService.list(),
+          matchService.list(),
+          lostItemService.list(),
+          foundItemService.list()
         ]);
 
         setStats({
-          totalLostItems: lostItems.totalItems,
-          totalFoundItems: foundItems.totalItems,
-          totalMatches: matches.totalItems,
-          pendingItems: pendingLostItems.totalItems + pendingFoundItems.totalItems,
+          totalLostItems: lostItems.length,
+          totalFoundItems: foundItems.length,
+          totalMatches: matches.length,
+          pendingItems: pendingLostItems.length + pendingFoundItems.length,
         });
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
@@ -61,7 +62,10 @@ export default function DashboardPage() {
         </Breadcrumb>
         
         {user && (
-          <h2 className="text-2xl font-bold">Welcome, {user.name}!</h2>
+          <div className="flex items-center space-x-2">
+            <h2 className="text-2xl font-bold">Welcome, {user.name}!</h2>
+            <Badge variant="outline" className="text-sm capitalize">{user.role}</Badge>
+          </div>
         )}
 
         {error && (

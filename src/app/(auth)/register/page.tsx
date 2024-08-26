@@ -7,6 +7,7 @@ import { AuthLayout } from '@/components/auth/AuthLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Loader2 } from "lucide-react";
 import { authService } from '@/services';
 
 export default function RegisterPage() {
@@ -121,9 +122,16 @@ export default function RegisterPage() {
           {error && <p className="text-red-500 text-sm">{error}</p>}
 
           <div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Registering...' : 'Register'}
-            </Button>
+          <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Registering...
+            </>
+          ) : (
+            'Register'
+          )}
+        </Button>
           </div>
         </form>
         <div className="text-center">

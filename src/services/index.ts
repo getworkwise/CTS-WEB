@@ -1,5 +1,6 @@
 import pb from '@/lib/pocketbase';
 import { CrudService } from './crudService';
+import { ClientResponseError } from 'pocketbase';
 
 // Base type for PocketBase records
 export interface BaseRecord {
@@ -56,7 +57,7 @@ export interface AuditLog extends BaseRecord {
   action: string;
   collection_name: string;
   record_id: string;
-  details: Record<string, any>; // JSON object
+  details: string; // JSON string
 }
 
 // Create services for each collection
@@ -77,18 +78,58 @@ export const authService = {
     return authData;
   },
 
-  async register(data: { email: string; password: string; passwordConfirm: string; name: string; role: User['role']; district: string }) {
-    const user = await pb.collection('users').create(data);
-    // Create an audit log entry for the new user registration
-    await auditLogService.create({
-      user: user.id,
-      action: 'user_registered',
-      collection_name: 'users',
-      record_id: user.id,
-      details: { role: data.role, district: data.district }
-    });
-    return user;
+
+  async register(data: {
+    email: string;
+    password: string;
+    passwordConfirm: string;
+    name: string;
+    role: User['role'];
+    district: string;
+  }) {
+    try {
+      const userData = {
+        username: data.email.split('@')[0], // Generate a username from the email
+        email: data.email,
+        emailVisibility: true,
+        password: data.password,
+        passwordConfirm: data.passwordConfirm,
+        name: data.name,
+        role: data.role,
+        district: data.district
+      };
+
+      const user = await pb.collection('users').create(userData);
+
+      // Create an audit log entry for the new user registration
+      const auditLogResult = await createAuditLog(
+        user.id,
+        'user_registered',
+        'users',
+        user.id,
+        {
+          role: data.role,
+          district: data.district
+        }
+      );
+
+      if (auditLogResult === null) {
+        console.warn('Failed to create audit log for user registration, but user was registered successfully.');
+      } else {
+        console.log('Audit log created successfully');
+      }
+
+      return user;
+    } catch (error) {
+      console.error('Error during user registration:', error);
+      if (error instanceof ClientResponseError) {
+        console.error('Response data:', error.data);
+        console.error('Response message:', error.message);
+      }
+      throw error; // Re-throw the error to be handled by the calling function
+    }
   },
+
 
   async logout() {
     pb.authStore.clear();
@@ -104,29 +145,119 @@ export const authService = {
 };
 
 // Helper function to create audit logs
-export async function createAuditLog(userId: string, action: string, collectionName: string, recordId: string, details: Record<string, any>) {
+export async function createAuditLog(
+  userId: string,
+  action: string,
+  collectionName: string,
+  recordId: string,
+  details: Record<string, any>
+): Promise<AuditLog | null> {
   try {
     const log = await auditLogService.create({
       user: userId,
       action,
       collection_name: collectionName,
       record_id: recordId,
-      details
+      details: JSON.stringify(details) // Convert details to JSON string
     });
     console.log('Audit log created:', log);
     return log;
   } catch (error) {
     console.error('Error creating audit log:', error);
-    throw error;
+    if (error instanceof ClientResponseError) {
+      console.error('Response data:', error.data);
+      console.error('Response message:', error.message);
+    }
+    return null;
   }
 }
 
 // Helper function to report a lost item
+// export async function reportLostItem(
+//   lostItemData: Omit<LostItem, 'id' | 'created' | 'updated' | 'user' | 'status' | 'is_official_document' | 'document_status'>,
+//   userId: string,
+//   isOfficialDocument: boolean
+// ) {
+//   console.log('Starting reportLostItem function');
+//   console.log('Lost item data:', lostItemData);
+//   console.log('User ID:', userId);
+//   console.log('Is official document:', isOfficialDocument);
+
+//   try {
+//     const lostItem = await lostItemService.create({
+//       ...lostItemData,
+//       user: userId,
+//       status: 'open',
+//       is_official_document: isOfficialDocument,
+//       document_status: isOfficialDocument ? 'reported' : undefined
+//     });
+//     console.log('Lost item created successfully:', lostItem);
+
+//     console.log('Attempting to create audit log');
+//     try {
+//       await createAuditLog(userId, 'report_lost_item', 'lost_items', lostItem.id, {
+//         ...lostItemData,
+//         is_official_document: isOfficialDocument
+//       });
+//       console.log('Audit log created successfully');
+//     } catch (error) {
+//       console.error('Error creating audit log:', error);
+//     }
+
+//     return lostItem;
+//   } catch (error) {
+//     console.error('Error in reportLostItem function:', error);
+//     throw error;
+//   }
+// export async function reportLostItem(
+//   lostItemData: Omit<LostItem, 'id' | 'created' | 'updated' | 'user' | 'status' | 'is_official_document' | 'document_status'>,
+//   userId: string,
+//   isOfficialDocument: boolean
+// ): Promise<LostItem> {
+//   console.log('Starting reportLostItem function');
+//   console.log('Lost item data:', lostItemData);
+//   console.log('User ID:', userId);
+//   console.log('Is official document:', isOfficialDocument);
+
+//   try {
+//     const lostItem = await lostItemService.create({
+//       ...lostItemData,
+//       user: userId,
+//       status: 'open',
+//       is_official_document: isOfficialDocument,
+//       document_status: isOfficialDocument ? 'reported' : undefined
+//     });
+//     console.log('Lost item created successfully:', lostItem);
+
+//     console.log('Attempting to create audit log');
+//     const auditLogResult = await createAuditLog(
+//       userId,
+//       'report_lost_item',
+//       'lost_items',
+//       lostItem.id,
+//       {
+//         ...lostItemData,
+//         is_official_document: isOfficialDocument
+//       }
+//     );
+
+//     if (auditLogResult === null) {
+//       console.warn('Failed to create audit log for lost item report, but the item was reported successfully.');
+//     } else {
+//       console.log('Audit log created successfully');
+//     }
+
+//     return lostItem;
+//   } catch (error) {
+//     console.error('Error in reportLostItem function:', error);
+//     throw error;
+//   }
+// }
 export async function reportLostItem(
   lostItemData: Omit<LostItem, 'id' | 'created' | 'updated' | 'user' | 'status' | 'is_official_document' | 'document_status'>,
   userId: string,
   isOfficialDocument: boolean
-) {
+): Promise<LostItem> {
   console.log('Starting reportLostItem function');
   console.log('Lost item data:', lostItemData);
   console.log('User ID:', userId);
@@ -143,14 +274,21 @@ export async function reportLostItem(
     console.log('Lost item created successfully:', lostItem);
 
     console.log('Attempting to create audit log');
-    try {
-      await createAuditLog(userId, 'report_lost_item', 'lost_items', lostItem.id, {
+    const auditLogResult = await createAuditLog(
+      userId,
+      'report_lost_item',
+      'lost_items',
+      lostItem.id,
+      {
         ...lostItemData,
         is_official_document: isOfficialDocument
-      });
+      }
+    );
+
+    if (auditLogResult === null) {
+      console.warn('Failed to create audit log for lost item report, but the item was reported successfully.');
+    } else {
       console.log('Audit log created successfully');
-    } catch (error) {
-      console.error('Error creating audit log:', error);
     }
 
     return lostItem;

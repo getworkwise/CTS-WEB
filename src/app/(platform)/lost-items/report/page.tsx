@@ -32,6 +32,44 @@ export default function ReportLostItemPage() {
     checkAuth();
   }, [router]);
 
+  // const handleSubmit = async (formData: any) => {
+  //   if (!isAuthenticated || !userId) {
+  //     toast.error('You must be logged in to report a lost item.');
+  //     return;
+  //   }
+  
+  //   const toastId = toast.loading('Reporting lost item...');
+  //   try {
+  //     console.log('Submitting form data:', formData);
+  //     const { 
+  //       is_official_document, 
+  //       ...lostItemData 
+  //     } = formData;
+      
+  //     if (is_official_document) {
+  //       lostItemData.issue_date = new Date(lostItemData.issue_date).toISOString();
+  //       lostItemData.expiry_date = new Date(lostItemData.expiry_date).toISOString();
+  //       lostItemData.document_status = 'reported';
+  //     }
+  
+  //     const result = await reportLostItem(
+  //       lostItemData,
+  //       userId,
+  //       is_official_document
+  //     );
+  
+  //     console.log('Created lost item:', result);
+  //     toast.success('Lost item reported successfully!', { id: toastId, duration: 3000 });
+      
+  //     // Delay redirection to allow toast to be seen
+  //     setTimeout(() => {
+  //       router.push('/lost-items');
+  //     }, 3000);
+  //   } catch (error) {
+  //     console.error('Error reporting lost item:', error);
+  //     toast.error(`Failed to report lost item: ${error instanceof Error ? error.message : 'Unknown error'}`, { id: toastId, duration: 5000 });
+  //   }
+  // };
   const handleSubmit = async (formData: any) => {
     if (!isAuthenticated || !userId) {
       toast.error('You must be logged in to report a lost item.');
@@ -48,7 +86,9 @@ export default function ReportLostItemPage() {
       
       if (is_official_document) {
         lostItemData.issue_date = new Date(lostItemData.issue_date).toISOString();
-        lostItemData.expiry_date = new Date(lostItemData.expiry_date).toISOString();
+        if (lostItemData.expiry_date) {
+          lostItemData.expiry_date = new Date(lostItemData.expiry_date).toISOString();
+        }
         lostItemData.document_status = 'reported';
       }
   
